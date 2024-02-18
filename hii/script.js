@@ -1,133 +1,161 @@
 function addContact() {
-    const contactFields = document.getElementById('contactFields');
-    const newContact = document.createElement('div');
+  const contactFields = document.getElementById("contactFields");
 
-    newContact.innerHTML =
-        '<div class="contact-inputs row">' +
-        '<div class="col-md-6 mb-3">' +
-        '<input type="tel" class="form-control" name="phone[]" pattern="[0-9]{10}" placeholder="Phone Number" required>' +
-        '</div>' +
-        '<div class="col-md-6 mb-3">' +
-        '<input type="email" class="form-control" name="email[]" placeholder="Email" required>' +
-        '</div>' +
-        '</div>';
+  const newContact = document.createElement("div");
+  newContact.classList.add("row", "mb-3"); // Add Bootstrap classes for styling
 
-    contactFields.appendChild(newContact);
+  newContact.innerHTML = `<div class="col-md-6">
+            <div class="form-floating">
+                <input type="tel" class="form-control" name="phone[]" pattern="[0-9]{10}" placeholder="Phone Number" required>
+                <label for="phone">Phone Number</label>
+                <div class="text-danger mt-1"></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-floating">
+                <input type="email" class="form-control" name="email[]" placeholder="Email" required>
+                <label for="email">Email</label>
+                <div class="text-danger mt-1"></div>
+            </div>
+        </div>`;
+
+  contactFields.appendChild(newContact);
 }
 
 function removeContact() {
-    const contactFields = document.getElementById('contactFields');
-    const lastContact = contactFields.lastElementChild;
+  const contactFields = document.getElementById("contactFields");
+  const lastContact = contactFields.lastElementChild;
 
-    if (lastContact) {
-        contactFields.removeChild(lastContact);
+  if (lastContact) {
+    contactFields.removeChild(lastContact);
+  }
+}
+// Get the necessary elements
+const statusSelect = document.getElementById("status");
+const pdStartDateInput = document.getElementById("pdStartDate");
+const pdEndDateInput = document.getElementById("pdEndDate");
+
+// Function to set up event listeners and adjust date inputs
+function setupEventListeners() {
+  const status = statusSelect.value;
+  const today = new Date();
+  const todayString = today.toLocaleDateString("en-CA"); // Format: YYYY-MM-DD
+
+  if (status === "active") {
+    // Set PD Starting Date to today's date
+    pdStartDateInput.value = todayString;
+
+    // Set PD Ending Date minimum to one day after today's date
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    pdEndDateInput.min = tomorrow.toLocaleDateString("en-CA");
+  } else if (status === "ongoing") {
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    pdStartDateInput.max = yesterday.toLocaleDateString("en-CA");
+
+    // Set PD Ending Date minimum to today's date
+    pdEndDateInput.min = today.toLocaleDateString("en-CA");
+    console.log("Minimum end date:", pdEndDateInput.min);
+  } else if (status === "expired") {
+    // Set PD Starting Date maximum to yesterday's date
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    pdStartDateInput.max = yesterday.toLocaleDateString("en-CA");
+
+    // Set PD Ending Date maximum to yesterday's date
+    pdEndDateInput.max = yesterday.toLocaleDateString("en-CA");
+  }
+}
+
+// Add event listener to the status select element
+statusSelect.addEventListener("change", setupEventListeners);
+
+// Function to validate PD Starting and Ending Dates
+function validateDateInputs() {
+  const startDate = new Date(pdStartDateInput.value);
+  const endDate = new Date(pdEndDateInput.value);
+
+  if (startDate > endDate) {
+    pdEndDateInput.setCustomValidity(
+      "PD Ending Date must be after PD Starting Date"
+    );
+  } else {
+    pdEndDateInput.setCustomValidity("");
+  }
+}
+function validateForm(event) {
+  var isValid = true;
+  var validationErrors = document.getElementById("validationErrors");
+  validationErrors.innerHTML = ""; // Clear previous validation errors
+
+  // Validate Indent Name
+  var indentName = document.getElementById("indentName").value.trim();
+  if (indentName === "") {
+    displayValidationError("Indent Name is required");
+    isValid = false;
+  }
+
+  // Validate Indentor Name
+  var indentorName = document.getElementById("indentorName").value.trim();
+  if (indentorName === "") {
+    displayValidationError("Indentor Name is required");
+    isValid = false;
+  }
+
+  // Validate Purchase Order Value
+  var poValue = document.getElementById("poValue").value.trim();
+  if (poValue === "") {
+    displayValidationError("Purchase Order (PO) Value is required");
+    isValid = false;
+  }
+
+  // Validate Status
+  var status = document.getElementById("status").value;
+  if (status === "") {
+    displayValidationError("Status is required");
+    isValid = false;
+  }
+
+  // Validate Supplier Name
+  var supplierName = document.getElementById("supplierName").value.trim();
+  if (supplierName === "") {
+    displayValidationError("Supplier Name is required");
+    isValid = false;
+  }
+
+  // Validate Supplier Phone Number
+  var phoneNumberInputs = document.getElementsByName("phone[]");
+  for (var i = 0; i < phoneNumberInputs.length; i++) {
+    var phoneNumber = phoneNumberInputs[i].value.trim();
+    if (phoneNumber === "") {
+      displayValidationError("Phone Number is required");
+      isValid = false;
+      break; // Exit loop if any phone number is empty
     }
-}
+  }
 
-function setError(element, message) {
-    element.innerHTML = message;
-}
-
-function clearError(element) {
-    element.innerHTML = '';
-}
-
-async function validateField(value, fieldName, minLength) {
-    const errorElement = document.getElementById(`${fieldName}ValidationError`);
-
-    if (value.trim() === '') {
-        setError(errorElement, `*Please enter ${fieldName}`);
-        return false;
-    } else if (value.length < minLength) {
-        setError(errorElement, `*${fieldName} must contain at least ${minLength} characters`);
-        return false;
-    } else {
-        clearError(errorElement);
-        return true;
+  // Validate Supplier Email
+  var emailInputs = document.getElementsByName("email[]");
+  for (var i = 0; i < emailInputs.length; i++) {
+    var email = emailInputs[i].value.trim();
+    if (email === "") {
+      displayValidationError("Email is required");
+      isValid = false;
+      break; // Exit loop if any email is empty
     }
+  }
+
+  if (!isValid) {
+    event.preventDefault(); // Prevent form submission if there are validation errors
+  }
+
+  return isValid;
 }
 
-async function validateForm(event) {
-    document.getElementById('validationErrors').innerHTML = '';
-    document.getElementById('generalValidationErrors').innerHTML = '';
-
-    const indentName = document.getElementById('indentName').value;
-    const indentorName = document.getElementById('indentorName').value;
-    const supplierName = document.getElementById('supplierName').value;
-    const poValue = document.getElementById('poValue').value;
-    const status = document.getElementById('status').value;
-    const pdStartDate = document.getElementById('pdStartDate').value;
-    const pdEndDate = document.getElementById('pdEndDate').value;
-    const phoneInputs = document.getElementsByName('phone[]');
-    const emailInputs = document.getElementsByName('email[]');
-
-    let isValid = true;
-
-    // Validate fields
-    isValid = isValid && (await validateField(indentName, 'indentName', 5));
-    isValid = isValid && (await validateField(indentorName, 'indentorName', 5));
-    isValid = isValid && (await validateField(supplierName, 'supplierName', 5));
-    isValid = isValid && (await validateField(poValue, 'poValue', 1));
-    isValid = isValid && (await validateField(status, 'status', 1));
-
-    // Validate PD Start Date
-    isValid = isValid && (await validateDate(pdStartDate, 'pdStartDateError'));
-
-    // Validate PD End Date
-    isValid = isValid && (await validateDate(pdEndDate, 'pdEndDateError'));
-
-    // Validate Contact Details
-    isValid = isValid && (await validateContactDetails(phoneInputs, 'phone'));
-    isValid = isValid && (await validateContactDetails(emailInputs, 'email'));
-
-    if (!isValid) {
-        document.getElementById('validationErrors').innerHTML = 'Please fill in all details.';
-        if (event) {
-            event.preventDefault();
-        }
-    } else {
-        // Your form submission logic goes here
-        console.log('Form submitted successfully!');
-        // In a real scenario, you might want to perform an AJAX request or other actions
-    }
+function displayValidationError(message) {
+  var validationErrors = document.getElementById("validationErrors");
+  var errorElement = document.createElement("div");
+  errorElement.textContent = message;
+  validationErrors.appendChild(errorElement);
 }
-
-async function validateDate(dateString, errorElementId) {
-    const errorElement = document.getElementById(errorElementId);
-
-    if (!dateString.trim()) {
-        setError(errorElement, '*Please select a date.');
-        return false;
-    }
-
-    const selectedDate = new Date(dateString);
-
-    if (selectedDate < getTodaysDate()) {
-        setError(errorElement, '*Please select a date equal to or after today.');
-        return false;
-    } else {
-        clearError(errorElement);
-        return true;
-    }
-}
-
-async function validateContactDetails(inputs, fieldName) {
-    const validationErrors = document.getElementById('contactValidationErrors');
-    validationErrors.innerHTML = '';
-
-    for (const input of inputs) {
-        if (!(await validateField(input.value, fieldName, fieldName === 'phone' ? 10 : 1))) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-function getTodaysDate() {
-    return new Date();
-}
-
-document.getElementById('pdForm').addEventListener('submit', function (event) {
-    validateForm(event);
-});
